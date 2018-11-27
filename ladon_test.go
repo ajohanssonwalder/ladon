@@ -64,6 +64,19 @@ var pols = []Policy{
 		Resources:   []string{"<.*>"},
 		Effect:      DenyAccess,
 	},
+	&DefaultPolicy{
+		ID:          "4",
+		Description: `This policy is for string contains, admins can view protected resources`,
+		Subjects:    []string{"<.*>"},
+		Resources:   []string{"myrn:some.domain.com:protectedresource:123"},
+		Actions:     []string{"get", "delete"},
+		Effect:      AllowAccess,
+		Conditions: Conditions{
+			"group": &StringContainsCondition{
+				Contains: "admin",
+			},
+		},
+	},
 }
 
 // Some test cases
@@ -146,6 +159,30 @@ var cases = []struct {
 		},
 		expectErr: true,
 	},
+	{
+		description: "should pass because policy 4.",
+		accessRequest: &Request{
+			Subject:  "andre",
+			Action:   "get",
+			Resource: "myrn:some.domain.com:protectedresource:123",
+			Context: Context{
+				"group": "admin",
+			},
+		},
+		expectErr: false,
+	},
+	{
+		description: "should not pass because policy 4.",
+		accessRequest: &Request{
+			Subject:  "alice",
+			Action:   "delete",
+			Resource: "myrn:some.domain.com:protectedresource:123",
+			Context: Context{
+				"group": "plebuser",
+			},
+		},
+		expectErr: true,
+	},
 }
 
 func TestLadon(t *testing.T) {
@@ -158,6 +195,7 @@ func TestLadon(t *testing.T) {
 	}
 
 	for k, c := range cases {
+		fmt.Println("I am running")
 		t.Run(fmt.Sprintf("case=%d-%s", k, c.description), func(t *testing.T) {
 
 			// This is where we ask the warden if the access requests should be granted
