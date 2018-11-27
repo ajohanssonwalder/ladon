@@ -53,6 +53,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		"clientIP": &CIDRCondition{CIDR: "127.0.0.1/0"},
 		"owner":    &EqualsSubjectCondition{},
 		"role":     &StringMatchCondition{Matches: ".*"},
+		"group":    &StringContainsCondition{Contains: "admin"},
 	}
 	out, err := json.Marshal(css)
 	require.Nil(t, err)
@@ -76,8 +77,14 @@ func TestMarshalUnmarshal(t *testing.T) {
 		}
 	},
 	"resourceFilter": {
-			"type": "ResourceContainsCondition"
+		"type": "ResourceContainsCondition"
+	},
+	"group": {
+		"type": "StringContainsCondition",
+		"options": {
+			"contains": "admin"
 		}
+	},
 }`), &cs))
 
 	require.Len(t, cs, 4)
@@ -85,6 +92,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 	assert.IsType(t, &CIDRCondition{}, cs["clientIP"])
 	assert.IsType(t, &StringMatchCondition{}, cs["role"])
 	assert.IsType(t, &ResourceContainsCondition{}, cs["resourceFilter"])
+	assert.IsType(t, &StringContainsCondition{}, cs["group"])
 }
 
 func TestUnmarshalFails(t *testing.T) {
